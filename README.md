@@ -1,1 +1,1 @@
-# AI-Agent-to-Triage-Founder-Inbox
+# AI Agent for Founder Inbox
