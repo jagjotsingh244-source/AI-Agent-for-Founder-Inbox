@@ -11,9 +11,7 @@ The agent classifies incoming emails into five categories:
 - Other
 
 For each category, the agent evaluates the email using category-specific signals to determine its credibility, collect supporting evidence, and assign an initial priority score. 
-
 It then compares the email against requirements and preferences defined by the human. The result of this comparison can increase or decrease the priority score. 
-
 Finally, emails are placed into a unified, priority-ranked inbox so that humans can review the most valuable opportunities first.
 
 
