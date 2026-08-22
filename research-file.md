@@ -36,9 +36,52 @@ To reduce the impact of uncertain classifications, the system uses a confidence-
 
 Credibility cannot be evaluated using one universal set of questions because each category has different signals ,which can reveal potential value behind the email. Therefore, the agent uses a different set of questions and evidence for each category.
 
-When the LLM looks at one email (say, an investor email), you don't just want it to spit out a number like "0.72." You want to see how it got there — what it checked and what it found with that we can find the reason behind the low score. That's why I created this structure.
+<img width="1472" height="3040" alt="image" src="https://github.com/user-attachments/assets/f262b698-cb0f-4a13-b9bf-a81338558f7f" />
 
 
+When the LLM looks at one email (say, an investor email), you don't just want it to spit out a number like "0.72." You want to see how it got there — what it checked and what it found with that we can find the reason behind the low score.A simple binary yes or no per question will hide all the details. I created this structure to solve this problems
+
+#### Piece 1: question_evaluations 
+This is how llm will treat each question.It shows one entry per question that we gave it (from the list we wrote for candidate/investor/partner/customer).
+
+For each question, it fills in three things:
+```
+  {"question": "which question this is answering",
+  "finding": "In one plain sentence what did the model actually notice",
+  "direction": "supports, contradicts, or insufficient_evidence"}
+```
+#### Piece 2: reasoning_summary 
+After going through all the questions one by one, the model writes 2-3 plain sentences pulling it all together: "here's the overall picture I'm seeing." This step forces the model to actually think about the whole picture before locking in a number, instead of jumping straight to a score.
+
+#### Piece 3: credibility_score  
+The actual number (e.g., 0.72) that comes after all the reasoning above it. Because it's generated last, it's actually influenced by everything that came before it in the same response — not a guess made in isolation.
+
+Overall structure
+```
+{
+  "question_evaluations": [
+    {
+      "question": "Does the claimed fund exist as a real, active investment entity?",
+      "finding": "Email claims 'Ridgeline Capital', a seed-stage fund. No verifiable public presence found in available context.",
+      "direction": "contradicts",
+    },
+    {
+      "question": "Is the sender's role at that fund verifiable?",
+      "finding": "Sender claims 'Principal' title. Nothing in the email itself can confirm this without external lookup.",
+      "direction": "insufficient_evidence",
+    }
+  ],
+  "reasoning_summary": "The core identity claim — that Ridgeline Capital is a real, active fund — could not be verified, which is the single most load-bearing fact for an investor email. Absent that, downstream claims about check size and sector fit can't be meaningfully assessed even though they sound plausible on their own.",
+  "credibility_score": 0.15
+}
+```
+
+
+***Why the order matters:*** the model writes this top to bottom, in one shot. If you asked for credibility_score first, it would have to pick a number before explaining itself — meaning the explanation would just be an excuse for a number it already guessed, not the actual reasoning that produced it. By putting the questions and reasoning first, the score is forced to follow logically from what's above it.
+
+Credibility score will act as are initial priority score.
+
+### Stage 3 -
 
 ## Eval approach
 
