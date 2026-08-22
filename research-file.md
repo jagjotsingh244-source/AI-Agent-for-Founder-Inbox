@@ -79,9 +79,37 @@ Overall structure
 
 ***Why the order matters:*** the model writes this top to bottom, in one shot. If you asked for credibility_score first, it would have to pick a number before explaining itself — meaning the explanation would just be an excuse for a number it already guessed, not the actual reasoning that produced it. By putting the questions and reasoning first, the score is forced to follow logically from what's above it.
 
-Credibility score will act as are initial priority score.
+Credibility score will act as are initial priority score on scale of 0-100
 
-### Stage 3 -
+### Stage 3 - Requirement matching
+
+This stage takes the requirements and preferences defined by the human and evaluates whether the sender or opportunity satisfies them.
+
+The result of this comparison can have a positive or negative impact on the initial priority score from Stage 2.
+
+Not all requirements are treated equally because some requirements are critical while others are simply preferences.
+
+* Must-have → Failure to satisfy a must-have should significantly decrease the priority while satisfying it increases the priority.
+* Preferred → Satisfying it increases priority, while failing to satisfy it has a smaller negative impact.
+* Nice-to-have → Small impact. Satisfying it provides a small positive boost.
+* Disqualifier → Largest negative impact. If a disqualifying condition is confirmed
+
+Lets talk about its mathematical aspect 
+
+A simple point-based model (start at a base score, add/subtract points per requirement) was the initial approach but was rejected for two reasons:
+
+*Unbounded stacking. Multiple failed must-haves would subtract independently with no natural ceiling, meaning enough accumulated penalties could numerically out-rank a genuine disqualifier — inverting the priority ordering the tier system is meant to enforce.
+*No principled connection to Stage 2. Stage 2's output is a probability (credibility score). An additive point system operating on that probability directly has no consistent interpretation — is +10 points the same "strength of evidence" at 90% confidence as it is at 20%? Probabilities compress near their bounds (0 and 1), so fixed-size adjustments behave inconsistently depending on where the score currently sits.
+
+Log-odds resolves both. Odds (p / (1-p)) are the natural unit for combining independent pieces of evidence — this is the same math underlying Bayesian updating, which the Stage 2 → Stage 3 pipeline is already implicitly structured around (prior → evidence → posterior). Taking the log of the odds converts evidence-combination from multiplication into addition, which is what makes a "sum of deltas" model principled rather than ad hoc. It also produces automatic saturation: once a score is pushed toward an extreme, further evidence in the same direction has diminishing effect — solving the stacking problem without a hand-coded floor or cap.
+
+Tier deltas (log-odds units):
+
+Tier	Satisfied	Failed	Unable to verify
+Must-have	+0.5	−3.0	−0.5
+Preferred	+0.7	−1.0	0
+Nice-to-have	+0.3	0	0
+Disqualifier	—	gate (see below)	—
 
 ## Eval approach
 
