@@ -83,34 +83,23 @@ Credibility score will act as are initial priority score on scale of 0-100
 
 ### Stage 3 - Requirement matching
 
-This stage takes the requirements and preferences defined by the human and evaluates whether the sender or opportunity satisfies them.
+This stage takes the requirements and preferences defined by the human and evaluates it with the sender Instead of just checking whether a sender meets each requirement or not, we score how well they meet it. A sender can fail a requirement, meet it exactly, or exceed it — and each of those should move the score differently.
 
-The result of this comparison can have a positive or negative impact on the initial priority score from Stage 2.
+Not every requirement should move the score by the same amount. A failed must-have should hurt a lot more than a missed nice-to-have. So each tier has its own "reward for exceeding" and "penalty for failing":
 
-Not all requirements are treated equally because some requirements are critical while others are simply preferences.
+Must-have: small reward if exceeded, big penalty if failed. Meeting it is expected — it's not really a bonus — but failing it is a serious problem.
+Preferred: decent reward if exceeded, decent penalty if failed. Roughly balanced either way.
+Nice-to-have: small reward if exceeded, no penalty if missing. Not having an optional extra isn't evidence of anything bad.
+Disqualifier: doesn't follow this scale at all — explained separately below.
 
-* Must-have → Failure to satisfy a must-have should significantly decrease the priority while satisfying it increases the priority.
-* Preferred → Satisfying it increases priority, while failing to satisfy it has a smaller negative impact.
-* Nice-to-have → Small impact. Satisfying it provides a small positive boost.
-* Disqualifier → Largest negative impact. If a disqualifying condition is confirmed
+## Why I design the agent this way 
+First, I initially considered building an agent that would approve or disqualify an email based on its intent, credibility, and requirement match. However, this creates a serious problem: the cost of a false negative is high.
+For example, if the agent incorrectly disqualifies a legitimate investor or high-quality candidate, the startup could lose a valuable opportunity. Even with a highly accurate system, the probability of this happening can never realistically be reduced to zero Because of this, I changed the goal of the system. The agent does not make the final decision. Instead, it ranks emails by priority and tells the human which emails deserve attention first and approximately how much attention they deserve.
 
-Lets talk about its mathematical aspect 
+Another design question is why the agent evaluates credibility before human-specific requirements.A possible alternative would be: "First check whether the opportunity satisfies the human’s requirements → only investigate credibility if it passes". This could reduce computation because the system would avoid researching opportunities that clearly fail the requirements. I chose the opposite approach because human requirements are expected to change more frequently than the underlying credibility evidence.For example, suppose a founder initially wants:“Find me AI engineers with 3+ years of experience.”Later, they change the requirement to:“Find me AI engineers with 5+ years of experience and LLM experience.”
 
-A simple point-based model (start at a base score, add/subtract points per requirement) was the initial approach but was rejected for two reasons:
-
-*Unbounded stacking. Multiple failed must-haves would subtract independently with no natural ceiling, meaning enough accumulated penalties could numerically out-rank a genuine disqualifier — inverting the priority ordering the tier system is meant to enforce.
-*No principled connection to Stage 2. Stage 2's output is a probability (credibility score). An additive point system operating on that probability directly has no consistent interpretation — is +10 points the same "strength of evidence" at 90% confidence as it is at 20%? Probabilities compress near their bounds (0 and 1), so fixed-size adjustments behave inconsistently depending on where the score currently sits.
-
-Log-odds resolves both. Odds (p / (1-p)) are the natural unit for combining independent pieces of evidence — this is the same math underlying Bayesian updating, which the Stage 2 → Stage 3 pipeline is already implicitly structured around (prior → evidence → posterior). Taking the log of the odds converts evidence-combination from multiplication into addition, which is what makes a "sum of deltas" model principled rather than ad hoc. It also produces automatic saturation: once a score is pushed toward an extreme, further evidence in the same direction has diminishing effect — solving the stacking problem without a hand-coded floor or cap.
-
-Tier deltas (log-odds units):
-
-Tier	Satisfied	Failed	Unable to verify
-Must-have	+0.5	−3.0	−0.5
-Preferred	+0.7	−1.0	0
-Nice-to-have	+0.3	0	0
-Disqualifier	—	gate (see below)	—
+The credibility and evidence collected about the candidates has not changed. The candidate’s GitHub, LinkedIn, resume, employment history, and other evidence can be reused. Only the requirement-matching stage needs to be run again. 
 
 ## Eval approach
 
-TBD — needs a labeled seed set before this can be meaningfully evaluated. Options to weigh once labeling starts: founder manually tags a seed batch vs. bootstrapping from heuristics (sender domain reputation, known VIP list) and refining thresholds from review-stage corrections over time.
+TBD 
