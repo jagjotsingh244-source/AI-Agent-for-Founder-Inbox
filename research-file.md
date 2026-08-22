@@ -81,15 +81,18 @@ Overall structure
 
 Credibility score will act as are initial priority score on scale of 0-100
 
-### Stage 3 - Requirement matching
+#### Stage 3 - Requirement matching
 
 This stage takes the requirements and preferences defined by the human and evaluates it with the sender Instead of just checking whether a sender meets each requirement or not, we score how well they meet it. A sender can fail a requirement, meet it exactly, or exceed it — and each of those should move the score differently.
 
 Not every requirement should move the score by the same amount. A failed must-have should hurt a lot more than a missed nice-to-have. So each tier has its own "reward for exceeding" and "penalty for failing":
 
 Must-have: small reward if exceeded, big penalty if failed. Meeting it is expected — it's not really a bonus — but failing it is a serious problem.
+
 Preferred: decent reward if exceeded, decent penalty if failed. Roughly balanced either way.
+
 Nice-to-have: small reward if exceeded, no penalty if missing. Not having an optional extra isn't evidence of anything bad.
+
 Disqualifier: doesn't follow this scale at all — explained separately below.
 
 ## Why I design the agent this way 
